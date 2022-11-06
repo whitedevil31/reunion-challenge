@@ -12,7 +12,6 @@ const auth = async (req, res, next) => {
       .db()
       .collection("user")
       .findOne({ _id: mongodb.ObjectId(decoded._id) });
-    console.log(response);
 
     if (response) {
       req.env = {

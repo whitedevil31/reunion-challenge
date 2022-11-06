@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "dev": "cross-env NODE_ENV=dev nodemon src/index.js",
+    "start": "cross-env NODE_ENV=prod  node src/index.js",
+    "test": "cross-env NODE_ENV=test mocha --timeout 10000 --exit"
   },
   "keywords": [],
   "author": "",
@@ -20,5 +21,11 @@
     "mongodb": "^4.11.0",
     "nodemon": "^2.0.20",
     "yup": "^0.32.11"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "chai-http": "^4.3.0",
+    "cross-env": "^7.0.3",
+    "mocha": "^10.1.0"
   }
 }

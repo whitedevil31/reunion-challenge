@@ -36,7 +36,7 @@ router.post("/authenticate", async (req, res, next) => {
       process.env.JWT_SECRET || "",
       { expiresIn: "10d" }
     );
-    res.json({ message: "Token created", result: token });
+    res.status(200).json({ message: "Token created", result: token });
   } catch (err) {
     next(err);
   }
@@ -46,7 +46,7 @@ router.post("/create_user", async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const username = req.body.username;
-  console.log(email);
+
   try {
     if (email === undefined) throw HttpError(400, "Email is required");
 
@@ -54,7 +54,7 @@ router.post("/create_user", async (req, res, next) => {
     if (username === undefined) throw HttpError(400, "username is required");
     const dbConnect = await dbClient();
     const findUser = await dbConnect.db().collection("user").findOne({ email });
-    console.log(findUser);
+
     if (findUser) {
       throw HttpError(409, "Email already exist");
     }
@@ -72,7 +72,7 @@ router.post("/create_user", async (req, res, next) => {
       process.env.JWT_SECRET || "",
       { expiresIn: "10d" }
     );
-    res.json({ message: "User created", result: token });
+    res.status(201).json({ message: "User created", result: token });
   } catch (err) {
     console.log(err);
     next(err);
@@ -81,6 +81,7 @@ router.post("/create_user", async (req, res, next) => {
 router.post("/follow/:id", auth, async (req, res, next) => {
   const userId = req.params.id;
   const userData = JSON.parse(req.env.user);
+
   try {
     if (userId === undefined) throw HttpError(400, "Id is required");
     const dbConnect = await dbClient();
@@ -107,7 +108,7 @@ router.post("/follow/:id", auth, async (req, res, next) => {
         });
     }
 
-    res.json({ message: "Following the user" });
+    res.status(200).json({ message: "Following the user" });
   } catch (err) {
     console.log(err);
     next(err);
@@ -132,9 +133,8 @@ router.post("/unfollow/:id", auth, async (req, res, next) => {
         userId: mongodb.ObjectId(userId),
         follower: mongodb.ObjectId(userData._id),
       });
-    console.log(findIfAlreadyExist);
+
     if (findIfAlreadyExist) {
-      console.log("re");
       await dbConnect
         .db()
         .collection("followers")
@@ -152,7 +152,6 @@ router.post("/unfollow/:id", auth, async (req, res, next) => {
 });
 router.get("/user", auth, async (req, res, next) => {
   const userData = JSON.parse(req.env.user);
-  console.log(userData._id);
 
   try {
     const dbConnect = await dbClient();

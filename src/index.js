@@ -15,7 +15,11 @@ app.use((error, req, res, next) => {
     res.status(error.status).json({ message: error.message });
   }
 });
+
 port = process.env.PORT || 3000;
+
 app.listen(port, () => {
   console.log("server is up on port " + port);
 });
+
+module.exports = app;
