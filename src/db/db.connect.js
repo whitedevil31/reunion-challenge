@@ -1,15 +1,21 @@
 const mongodb = require("mongodb");
 let client;
 async function connectDB() {
-  const uri =
+  let dbUri = "";
+  dbUri =
     process.env.NODE_ENV == "test" ? process.env.TEST_DB : process.env.PROD_DB;
+
+  if (process.env.NODE_ENV == "dockerStart") {
+    dbUri = "mongodb://mongo/reunion";
+  }
+
   console.log(process.env.NODE_ENV);
-  console.log(process.env.PROD_DB);
-  console.log(uri);
-  client = await mongodb.MongoClient.connect(uri || "", {
+  console.log(dbUri);
+  client = await mongodb.MongoClient.connect(dbUri || "", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
+
   const db = process.env.NODE_ENV == "test" ? "TEST" : "PROD";
   console.log(`Hooray! 🎉🎉 Connected to ${db} Database.`);
   return client;

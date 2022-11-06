@@ -1,0 +1,24 @@
+version: "3"
+services:
+  api:
+    image: nanda31/reunion
+    ports:
+      - "5000:5000"
+    networks:
+      - node-mongo-network
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - node-mongo-network
+    volumes:
+      - mongo-data:/data/db
+networks:
+  node-mongo-network:
+    driver: bridge
+volumes:
+  mongo-data:
+    driver: local

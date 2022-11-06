@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=dev nodemon src/index.js",
-    "start": "cross-env NODE_ENV=prod  node src/index.js",
-    "test": "cross-env NODE_ENV=test mocha --timeout 10000 --exit"
+    "test": "cross-env NODE_ENV=test mocha --timeout 10000 --exit",
+    "start": "cross-env NODE_ENV=deployStart node src/index.js",
+    "docker-start": "cross-env NODE_ENV=dockerStart node src/index.js"
   },
   "keywords": [],
   "author": "",
