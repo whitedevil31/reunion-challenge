@@ -7,7 +7,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const HttpError = require("http-errors");
 const mongodb = require("mongodb");
-const { response } = require("express");
 
 router.post("/posts", auth, async (req, res, next) => {
   const title = req.body.title;
@@ -20,7 +19,7 @@ router.post("/posts", auth, async (req, res, next) => {
     const dbConnect = await dbClient();
 
     const postData = {
-      userId: userData._id,
+      userId: mongodb.ObjectId(userData._id),
       title,
       description: desc,
       createdAt: new Date().getTime(),
@@ -49,7 +48,10 @@ router.delete("/posts/:id", auth, async (req, res, next) => {
     const findPost = await dbConnect
       .db()
       .collection("posts")
-      .findOne({ userId: userData._id, _id: mongodb.ObjectId(postId) });
+      .findOne({
+        userId: mongodb.ObjectId(userData._id),
+        _id: mongodb.ObjectId(postId),
+      });
     if (!findPost) {
       throw HttpError(404, "Post not found");
     }
@@ -74,7 +76,10 @@ router.delete("/posts/:id", auth, async (req, res, next) => {
     const findPost = await dbConnect
       .db()
       .collection("posts")
-      .findOne({ userId: userData._id, _id: mongodb.ObjectId(postId) });
+      .findOne({
+        userId: mongodb.ObjectId(userData._id),
+        _id: mongodb.ObjectId(postId),
+      });
     if (!findPost) {
       throw HttpError(404, "Post not found");
     }
@@ -106,12 +111,18 @@ router.post("/like/:id", auth, async (req, res, next) => {
     const liked = await dbConnect
       .db()
       .collection("likes")
-      .findOne({ userId: userData._id, postId });
+      .findOne({
+        userId: mongodb.ObjectId(userData._id),
+        postId: mongodb.ObjectId(postId),
+      });
     if (!liked) {
       await dbConnect
         .db()
         .collection("likes")
-        .insertOne({ postId, userId: userData._id });
+        .insertOne({
+          postId: mongodb.ObjectId(postId),
+          userId: mongodb.ObjectId(userData._id),
+        });
     }
 
     res.status(200).json({ message: "Post liked" });
@@ -135,13 +146,19 @@ router.post("/unlike/:id", auth, async (req, res, next) => {
     const liked = await dbConnect
       .db()
       .collection("likes")
-      .findOne({ userId: userData._id, postId });
+      .findOne({
+        userId: mongodb.ObjectId(userData._id),
+        postId: mongodb.ObjectId(postId),
+      });
 
     if (liked) {
       await dbConnect
         .db()
         .collection("likes")
-        .deleteOne({ postId, userId: userData._id });
+        .deleteOne({
+          userId: mongodb.ObjectId(userData._id),
+          postId: mongodb.ObjectId(postId),
+        });
     }
     res.status(200).json({ message: "Unliked post" });
   } catch (err) {
@@ -167,14 +184,18 @@ router.post("/comment/:id", auth, async (req, res, next) => {
     const response = await dbConnect
       .db()
       .collection("comments")
-      .insertOne({ userId: userData._id, comment, postId });
+      .insertOne({
+        userId: mongodb.ObjectId(userData._id),
+        comment,
+        postId: mongodb.ObjectId(postId),
+      });
     res.status(200).json({ commentId: response.insertedId });
   } catch (err) {
     console.log(err);
     next(err);
   }
 });
-router.get("/posts/:id", auth, async (req, res, next) => {
+router.get("/posts/:id", async (req, res, next) => {
   const postId = req.params.id;
 
   try {
@@ -191,12 +212,12 @@ router.get("/posts/:id", auth, async (req, res, next) => {
     const likes = await dbConnect
       .db()
       .collection("likes")
-      .find({ postId })
+      .find({ postId: mongodb.ObjectId(postId) })
       .toArray();
     const comments = await dbConnect
       .db()
       .collection("comments")
-      .find({ postId })
+      .find({ postId: mongodb.ObjectId(postId) })
       .toArray();
 
     res.status(200).json({
@@ -209,4 +230,47 @@ router.get("/posts/:id", auth, async (req, res, next) => {
     next(err);
   }
 });
+router.get("/all_posts", auth, async (req, res, next) => {
+  try {
+    const dbConnect = await dbClient();
+    const response = await dbConnect
+      .db()
+      .collection("posts")
+      .aggregate([
+        {
+          $lookup: {
+            from: "comments",
+            localField: "_id",
+            foreignField: "postId",
+            as: "comments",
+          },
+        },
+        {
+          $lookup: {
+            from: "likes",
+            localField: "_id",
+            foreignField: "postId",
+            as: "likes",
+          },
+        },
+        { $addFields: { no_of_likes: { $size: "$likes" } } },
+        { $sort: { createdAt: -1 } },
+        { $unset: ["likes"] },
+        {
+          $project: {
+            userId: 0,
+            "comments.postId": 0,
+            "comments.userId": 0,
+          },
+        },
+      ])
+      .toArray();
+
+    res.json(response);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
+
 module.exports = router;

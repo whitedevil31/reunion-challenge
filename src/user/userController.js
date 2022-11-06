@@ -78,7 +78,7 @@ router.post("/create_user", async (req, res, next) => {
     next(err);
   }
 });
-router.get("/follow/:id", auth, async (req, res, next) => {
+router.post("/follow/:id", auth, async (req, res, next) => {
   const userId = req.params.id;
   const userData = JSON.parse(req.env.user);
   try {
@@ -90,10 +90,22 @@ router.get("/follow/:id", auth, async (req, res, next) => {
       .findOne({ _id: mongodb.ObjectId(userId) });
 
     if (!findUser) throw HttpError(404, "User not found");
-    await dbConnect
+    const findIfAlreadyExist = await dbConnect
       .db()
       .collection("followers")
-      .insertOne({ userId, follower: userData._id });
+      .findOne({
+        userId: mongodb.ObjectId(userId),
+        follower: mongodb.ObjectId(userData._id),
+      });
+    if (!findIfAlreadyExist) {
+      await dbConnect
+        .db()
+        .collection("followers")
+        .insertOne({
+          userId: mongodb.ObjectId(userId),
+          follower: mongodb.ObjectId(userData._id),
+        });
+    }
 
     res.json({ message: "Following the user" });
   } catch (err) {
@@ -101,7 +113,7 @@ router.get("/follow/:id", auth, async (req, res, next) => {
     next(err);
   }
 });
-router.get("/unfollow/:id", auth, async (req, res, next) => {
+router.post("/unfollow/:id", auth, async (req, res, next) => {
   const userId = req.params.id;
   const userData = JSON.parse(req.env.user);
   try {
@@ -113,10 +125,24 @@ router.get("/unfollow/:id", auth, async (req, res, next) => {
       .findOne({ _id: mongodb.ObjectId(userId) });
 
     if (!findUser) throw HttpError(404, "User not found");
-    await dbConnect
+    const findIfAlreadyExist = await dbConnect
       .db()
       .collection("followers")
-      .deleteOne({ userId, follower: userData._id });
+      .findOne({
+        userId: mongodb.ObjectId(userId),
+        follower: mongodb.ObjectId(userData._id),
+      });
+    console.log(findIfAlreadyExist);
+    if (findIfAlreadyExist) {
+      console.log("re");
+      await dbConnect
+        .db()
+        .collection("followers")
+        .deleteOne({
+          userId: mongodb.ObjectId(userId),
+          follower: mongodb.ObjectId(userData._id),
+        });
+    }
 
     res.json({ message: "Unfollowing the user " });
   } catch (err) {
@@ -138,12 +164,12 @@ router.get("/user", auth, async (req, res, next) => {
     const followingData = await dbConnect
       .db()
       .collection("followers")
-      .find({ follower: userData._id })
+      .find({ follower: mongodb.ObjectId(userData._id) })
       .count();
     const followersData = await dbConnect
       .db()
       .collection("followers")
-      .find({ userId: userData._id })
+      .find({ userId: mongodb.ObjectId(userData._id) })
       .count();
     res.json({
       username: findUser.username,
