@@ -9,8 +9,6 @@ async function connectDB() {
     dbUri = "mongodb://mongo/reunion";
   }
 
-  console.log(process.env.NODE_ENV);
-  console.log(dbUri);
   client = await mongodb.MongoClient.connect(dbUri || "", {
     useNewUrlParser: true,
     useUnifiedTopology: true,

@@ -11,7 +11,6 @@ app.use("/api", userController);
 app.use("/api", postController);
 app.use((error, req, res, next) => {
   if (error) {
-    // console.log(error);
     res.status(error.status).json({ message: error.message });
   }
 });
