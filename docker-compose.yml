@@ -1,0 +1,6 @@
+version: "3"
+services:
+  api:
+    image: nanda31/reunion
+    ports:
+      - "5000:5000"
